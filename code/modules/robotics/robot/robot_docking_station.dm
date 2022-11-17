@@ -169,6 +169,7 @@
 	src.add_fingerprint(user)
 	src.occupant = H
 	src.build_icon()
+	return TRUE
 
 /obj/machinery/recharge_station/MouseDrop_T(atom/movable/AM as mob|obj, mob/user as mob)
 	if (BOUNDS_DIST(AM, user) > 0 || BOUNDS_DIST(src, user) > 0)
@@ -608,9 +609,6 @@
 		if("occupant-rename")
 			if (!isrobot(src.occupant))
 				return
-			if (user == src.occupant)
-				boutput(user, "<span class='alert'>You may not rename yourself!</span>")
-				return
 			var/mob/living/silicon/robot/R = src.occupant
 			var/newname = copytext(strip_html(sanitize(tgui_input_text(user, "What do you want to rename [R]?", "Cyborg Maintenance", R.name))), 1, 64)
 			if ((!issilicon(user) && (BOUNDS_DIST(user, src) > 0)) || user.stat || !newname)
@@ -621,7 +619,7 @@
 				return
 			if(newname && newname != R.name)
 				phrase_log.log_phrase("name-cyborg", newname, no_duplicates=TRUE)
-			logTheThing(LOG_COMBAT, user, "uses a docking station to rename [constructTarget(R,"combat")] to [newname].")
+			logTheThing(LOG_STATION, user, "uses a docking station to rename [constructTarget(R,"combat")] to [newname].")
 			R.real_name = "[newname]"
 			R.UpdateName()
 			if (R.internal_pda)

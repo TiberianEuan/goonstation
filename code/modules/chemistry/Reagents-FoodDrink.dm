@@ -18,10 +18,11 @@ datum
 			fluid_b = 65
 			transparency = 240
 			taste = "vile"
-			depletion_rate = 0.075
+			depletion_rate = 0.4
 			description = "This appears to be beer mixed with milk."
 			reagent_state = LIQUID
 			value = 2
+			overdose = 30
 			thirst_value = 0.4
 			bladder_value = -0.2
 			viscosity = 0.2
@@ -38,6 +39,34 @@ datum
 					M.HealDamage("All", 1 * mult, 1 * mult)
 				..()
 				return
+
+			do_overdose(var/severity, var/mob/M, var/mult = 1)
+				var/effect = ..(severity, M)
+				if (severity == 1) //lesser
+					M.stuttering += 1
+					if(effect <= 1)
+						M.visible_message("<span class='alert'><b>[M.name]</b> suddenly cluches their gut!</span>")
+						M.emote("scream")
+						M.setStatusMin("weakened", 4 SECONDS * mult)
+					else if(effect <= 3)
+						M.visible_message("<span class='alert'><b>[M.name]</b> completely spaces out for a moment.</span>")
+						M.change_misstep_chance(15 * mult)
+					else if(effect <= 5)
+						M.visible_message("<span class='alert'><b>[M.name]</b> stumbles and staggers.</span>")
+						M.dizziness += 5
+						M.setStatusMin("weakened", 4 SECONDS * mult)
+					else if(effect <= 7)
+						M.visible_message("<span class='alert'><b>[M.name]</b> shakes uncontrollably.</span>")
+						M.make_jittery(30)
+				else if (severity == 2) // greater
+					if(effect <= 5)
+						M.visible_message(pick("<span class='alert'><b>[M.name]</b> jerks bolt upright, then collapses!</span>",
+							"<span class='alert'><b>[M.name]</b> suddenly cluches their gut!</span>"))
+						M.setStatusMin("weakened", 8 SECONDS * mult)
+					else if(effect <= 8)
+						M.visible_message("<span class='alert'><b>[M.name]</b> stumbles and staggers.</span>")
+						M.dizziness += 5
+						M.setStatusMin("weakened", 4 SECONDS * mult)
 
 		fooddrink/milk
 			name = "milk"
@@ -69,8 +98,9 @@ datum
 				return
 
 			reaction_mob(var/mob/M, var/method=TOUCH, var/volume, var/paramslist = 0)
-				..()
+				. = ..()
 				if(M.mob_flags & IS_BONEY)
+					. = FALSE
 					M.HealDamage("All", clamp(1 * volume, 0, 20), clamp(1 * volume, 0, 20)) //put a cap on instant healing
 					if(prob(15))
 						boutput(M, "<span class='notice'>The milk comforts your [pick("boanes","bones","bonez","boens","bowns","beaunes","brones","bonse")]!</span>")
@@ -2032,7 +2062,6 @@ datum
 					if (volume_passed > 10)
 						if (volume_passed >= 80)
 							boutput(M, "<span class='alert'><b>HOLY FUCK!!!!</b></span>")
-							M.emote("scream")
 							M.stuttering += 30
 							M.setStatusMin("weakened", 5 SECONDS)
 						else if (volume_passed >= 40 && volume_passed < 80)
@@ -2095,7 +2124,6 @@ datum
 				//var/mob/living/carbon/human/H = M
 				if(method == INGEST)
 					boutput(M, "<span class='alert'><b>HOLY FUCK!!!!</b></span>")
-					M.emote("scream")
 					M.stuttering += 30
 					M.changeStatus("stunned", 2 SECONDS)
 					if (prob(20))
@@ -3712,7 +3740,6 @@ datum
 					M.make_dizzy(33 * mult)
 
 					M.take_brain_damage(9 * mult)
-					M.emote("scream")
 
 					if(probmult(25)) fake_attackEx(M, 'icons/effects/hallucinations.dmi', "orange", "orange")
 					if(probmult(25)) fake_attackEx(M, 'icons/effects/hallucinations.dmi', "lime", "lime")
